@@ -11,11 +11,19 @@ import (
 )
 
 func main() {
+	// create root logger
 	logger := log2.New(os.Stdout, "go-micro", log2.LstdFlags)
+
+	// create the handlers
 	helloHandler := handlers.NewHello(logger)
+	ph := handlers.NewProducts(logger)
+
+	// create a new serve mux and register the handler
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/", helloHandler)
+	serveMux.Handle("/products", ph)
 
+	// create a new server
 	S := &http.Server{
 		Addr:              ":9090",
 		Handler:           serveMux,
@@ -25,6 +33,7 @@ func main() {
 		IdleTimeout:       120 * time.Second,
 	}
 
+	// start the server
 	go func() {
 		err := S.ListenAndServe()
 		if err != nil {
@@ -32,6 +41,7 @@ func main() {
 		}
 	}()
 
+	// trap sigterm or interupt and gracefully shutdown the server
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, os.Kill)
